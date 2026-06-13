@@ -1,0 +1,587 @@
+/* ==========================================================================
+   Club Radar 2 (클럽레이더 2) - Premium Luxury Neon Dark Stylesheet
+   ========================================================================== */
+
+/* 1. 기본 애니메이션 정의 (Premium Core Animations) */
+
+/* 레이더 펄스 파동 효과 */
+@keyframes radarPulse {
+  0% {
+    transform: scale(0.1);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* 레이더 회전 스캔 광선 효과 */
+@keyframes radarSweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 네온 핑크 글로우 깜빡임 효과 */
+@keyframes neonGlowPink {
+  from {
+    box-shadow: 0 0 5px rgba(255, 0, 127, 0.2), 0 0 10px rgba(255, 0, 127, 0.1), inset 0 0 5px rgba(255, 0, 127, 0.1);
+  }
+  to {
+    box-shadow: 0 0 15px rgba(255, 0, 127, 0.6), 0 0 30px rgba(255, 0, 127, 0.3), inset 0 0 10px rgba(255, 0, 127, 0.2);
+  }
+}
+
+/* 네온 사이언 글로우 깜빡임 효과 */
+@keyframes neonGlowCyan {
+  from {
+    box-shadow: 0 0 5px rgba(0, 240, 255, 0.2), 0 0 10px rgba(0, 240, 255, 0.1), inset 0 0 5px rgba(0, 240, 255, 0.1);
+  }
+  to {
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.6), 0 0 30px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(0, 240, 255, 0.2);
+  }
+}
+
+/* 네온 골드 글로우 깜빡임 효과 */
+@keyframes neonGlowGold {
+  from {
+    box-shadow: 0 0 5px rgba(233, 195, 73, 0.2), 0 0 10px rgba(233, 195, 73, 0.1), inset 0 0 5px rgba(233, 195, 73, 0.1);
+  }
+  to {
+    box-shadow: 0 0 18px rgba(233, 195, 73, 0.7), 0 0 35px rgba(233, 195, 73, 0.35), inset 0 0 12px rgba(233, 195, 73, 0.2);
+  }
+}
+
+/* 텍스트 네온 깜빡임 효과 */
+@keyframes neonTextFlicker {
+  0%, 100% {
+    text-shadow: 0 0 4px rgba(255, 0, 127, 0.6), 0 0 10px rgba(255, 0, 127, 0.4);
+    opacity: 1;
+  }
+  50% {
+    text-shadow: 0 0 2px rgba(255, 0, 127, 0.2), 0 0 5px rgba(255, 0, 127, 0.1);
+    opacity: 0.85;
+  }
+}
+
+/* 글로벌 바디 리셋 및 가로 스크롤 밀림 완벽 방어 */
+body {
+  overflow-x: hidden !important;
+  width: 100vw !important;
+  max-width: 100% !important;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 2. 프리미엄 유틸리티 클래스 설계 (Luxury Utility Classes) */
+
+/* VVIP 전용 글래스모피즘 카드 디자인 */
+.glass-card {
+  background: rgba(10, 8, 22, 0.7);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 0, 127, 0.12);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card-hover:hover {
+  border-color: rgba(255, 0, 127, 0.35);
+  background: rgba(18, 14, 38, 0.85);
+  transform: translateY(-3px);
+  box-shadow: 0 24px 48px rgba(255, 0, 127, 0.1), 0 8px 32px rgba(0, 0, 0, 0.7);
+}
+
+/* 네온 테두리 광채 클래스들 */
+.neon-border-pink {
+  border: 1px solid rgba(255, 0, 127, 0.4) !important;
+  animation: neonGlowPink 3s ease-in-out infinite alternate;
+}
+
+.neon-border-cyan {
+  border: 1px solid rgba(0, 240, 255, 0.4) !important;
+  animation: neonGlowCyan 3s ease-in-out infinite alternate;
+}
+
+.neon-border-gold {
+  border: 1px solid rgba(233, 195, 73, 0.4) !important;
+  animation: neonGlowGold 3s ease-in-out infinite alternate;
+}
+
+/* 텍스트 네온 효과 */
+.neon-text-pink {
+  color: #ff007f;
+  animation: neonTextFlicker 2s infinite alternate;
+}
+
+.neon-text-cyan {
+  color: #00f0ff;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.5);
+}
+
+.neon-text-gold {
+  color: #e9c349;
+  text-shadow: 0 0 8px rgba(233, 195, 73, 0.6);
+}
+
+/* 레이더 펄스 링 클래스 */
+.radar-pulse-ring {
+  animation: radarPulse 3.5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+/* 레이더 회전 스캐너 */
+.radar-scan-line {
+  animation: radarSweep 6s linear infinite;
+  transform-origin: center;
+}
+
+/* 모바일 디바이스 내 스크롤 제거 */
+::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 3. 모바일 안전 영역 및 터치 피드백 */
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+}
+
+.pt-safe {
+  padding-top: calc(env(safe-area-inset-top) + 16px);
+}
+
+/* 쫀득한 햅틱 터치 모션 */
+.btn-active-scale {
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.15s ease;
+}
+
+.btn-active-scale:active {
+  transform: scale(0.94);
+  filter: brightness(1.25) contrast(1.1);
+}
+
+/* 3050 야간 가독성 48px 대형 엄지손가락 터치 버튼 */
+.thumb-touch-btn {
+  height: 52px;
+  min-height: 52px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 20px;
+  cursor: pointer;
+  letter-spacing: -0.5px;
+  transition: all 0.2s ease;
+}
+
+/* 3050 맞춤형 텍스트 크기 가독성 향상 클래스 */
+.readable-text-title {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 1.4;
+}
+
+.readable-text-body {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: -0.3px;
+}
+
+/* 4. 특화 UI 배지 테마 그라디언트 */
+.bg-neon-gradient {
+  background: linear-gradient(135deg, #bc00dd 0%, #ff0055 50%, #ff5500 100%);
+}
+
+.bg-cyan-gradient {
+  background: linear-gradient(135deg, #0055ff 0%, #00e5ff 100%);
+}
+
+.bg-gold-gradient {
+  background: linear-gradient(135deg, #b8860b 0%, #e9c349 50%, #ffe4b5 100%);
+}
+
+.bg-dark-gradient {
+  background: linear-gradient(135deg, #15112a 0%, #05050a 100%);
+}
+
+/* 모바일 디바이스 껍데기 프레임 목업 */
+.device-wrapper {
+  width: 420px;
+  min-width: 420px;
+  height: 880px;
+  border: 12px solid #1a1a2e;
+  border-radius: 48px;
+  box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(188, 0, 221, 0.05);
+  background-color: #05050a;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 노치 디자인 모사 */
+.device-notch {
+  width: 150px;
+  height: 30px;
+  background-color: #1a1a2e;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  z-index: 1000;
+  box-shadow: inset 0 -2px 5px rgba(255, 255, 255, 0.02);
+}
+
+/* 5. 커스텀 UI 애니메이션 */
+@keyframes toastSlideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toastSlideOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+}
+
+.toast-message {
+  animation: toastSlideIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  pointer-events: auto;
+}
+
+.toast-message.closing {
+  animation: toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 6. 모바일 실기기 QA용 반응형 레이아웃 */
+@media (max-width: 768px) {
+  body {
+    padding: 0 !important;
+    background: #05050a !important;
+    display: block !important;
+  }
+  
+  .device-wrapper {
+    max-width: 100% !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100dvh !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: radial-gradient(circle at top, #0f071e 0%, #05050a 100%) !important;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left) !important;
+    box-sizing: border-box !important;
+  }
+  
+  .device-notch {
+    display: none !important;
+  }
+  
+  .device-wrapper > div.h-8 {
+    display: none !important;
+  }
+
+  .pc-bg-orbs {
+    display: none !important;
+  }
+}
+
+/* 7. PC 전용 VVIP 럭셔리 무빙 네온 오브 배경 시스템 */
+.pc-bg-orbs {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(140px);
+  opacity: 0.18;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.orb-pink {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #ff007f 0%, rgba(255,0,127,0) 70%);
+  top: -100px;
+  right: -100px;
+  animation: floatOrb1 20s ease-in-out infinite alternate;
+}
+
+.orb-cyan {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, #00f0ff 0%, rgba(0,240,255,0) 70%);
+  bottom: -150px;
+  left: -150px;
+  animation: floatOrb2 25s ease-in-out infinite alternate;
+}
+
+.orb-gold {
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, #e9c349 0%, rgba(233,195,73,0) 70%);
+  top: 40%;
+  left: 30%;
+  opacity: 0.12;
+  animation: floatOrb3 18s ease-in-out infinite alternate;
+}
+
+@keyframes floatOrb1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-60px, 80px) scale(1.1);
+  }
+  100% {
+    transform: translate(40px, -40px) scale(0.9);
+  }
+}
+
+@keyframes floatOrb2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(80px, -60px) scale(0.95);
+  }
+  100% {
+    transform: translate(-30px, 40px) scale(1.05);
+  }
+}
+
+@keyframes floatOrb3 {
+  0% {
+    transform: translate(0, 0) scale(0.9);
+    opacity: 0.08;
+  }
+  50% {
+    transform: translate(-40px, -50px) scale(1.1);
+    opacity: 0.14;
+  }
+  100% {
+    transform: translate(50px, 30px) scale(1);
+    opacity: 0.08;
+  }
+}
+
+/* 8. [NEW] 웨이터 가입 승인대기 타임라인 게이지 클래스 */
+.timeline-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  width: 100%;
+  margin: 24px 0;
+}
+
+.timeline-line {
+  position: absolute;
+  top: 15px;
+  left: 10%;
+  right: 10%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+.timeline-progress {
+  position: absolute;
+  top: 15px;
+  left: 10%;
+  height: 3px;
+  background: linear-gradient(90deg, #ff007f, #bc00dd);
+  z-index: 2;
+  transition: width 0.5s ease;
+}
+
+.timeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 3;
+  width: 30%;
+}
+
+.timeline-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0d0b18;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.4);
+  transition: all 0.3s ease;
+}
+
+.timeline-step.active .timeline-dot {
+  background: #ff007f;
+  border-color: #ff007f;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(255, 0, 127, 0.6);
+}
+
+.timeline-step.completed .timeline-dot {
+  background: #bc00dd;
+  border-color: #bc00dd;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(188, 0, 221, 0.5);
+}
+
+.timeline-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 8px;
+  text-align: center;
+}
+
+.timeline-step.active .timeline-label {
+  color: #ff007f;
+  font-weight: 900;
+}
+
+.timeline-step.completed .timeline-label {
+  color: #bc00dd;
+}
+
+/* 9. [NEW] 어드민 대시보드 네온 카드 위젯 */
+.admin-widget-card {
+  background: rgba(20, 17, 38, 0.65);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  transition: all 0.25s ease;
+}
+
+.admin-widget-card:hover {
+  border-color: rgba(0, 240, 255, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 240, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.admin-tab-btn {
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.admin-tab-btn.active {
+  background: rgba(0, 240, 255, 0.1);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: #00f0ff;
+  box-shadow: inset 0 0 6px rgba(0,240,255,0.15);
+}
+
+/* 10. PC 대형 화면용 어드민 모드 유연성 확장 (PC Admin View Expansion) */
+/* PC 브라우저에서 관리자 모드를 켰을 때 화면폭을 넓게 키워 가독성을 극대화합니다. */
+.device-wrapper.admin-expanded {
+  width: 960px !important;
+  max-width: 960px !important;
+  height: 880px;
+  border-radius: 36px;
+  transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) !important;
+}
+
+@media (max-width: 768px) {
+  .device-wrapper.admin-expanded {
+    width: 100vw !important;
+    max-width: 100% !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* 11. PC 뷰포트 높이 제약 방어 (PC Viewport Height Safeguard) */
+/* PC 브라우저 높이가 디바이스 프레임 높이(880px)보다 작을 때, 화면이 잘려 하단 가입 버튼을 못 누르는 현상을 완치합니다. */
+@media (min-width: 769px) and (max-height: 920px) {
+  body {
+    overflow-y: auto !important; /* PC 브라우저 창의 세로 스크롤을 전격 개방! */
+    align-items: flex-start !important; /* 화면 중앙이 아닌 위쪽 정렬하여 브라우저 스크롤로 프레임 하단까지 볼 수 있게 함 */
+    padding-top: 24px !important;
+    padding-bottom: 48px !important;
+  }
+}
+
+/* 12. 갤럭시 폴드6 전면화면 등 초협소 모바일 기기(가로폭 360px 이하) 전용 초정밀 헤더 핫픽스 (Fold6 Header Scale Down) */
+@media (max-width: 360px) {
+  header {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+  
+  #header-app-title {
+    font-size: 11px !important;
+    letter-spacing: 0.02em !important;
+  }
+  
+  header div.flex.items-center.gap-3 {
+    gap: 6px !important; /* 아이콘 및 뱃지 간의 내부 gap 축소 */
+  }
+  
+  #top-credit-badge {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    font-size: 9px !important;
+  }
+
+  header .material-symbols-outlined {
+    font-size: 18px !important; /* 아이콘 크기를 아담하게 정돈하여 화면 내 밀림 영구 차단 */
+  }
+}
+

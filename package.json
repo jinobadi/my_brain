@@ -1,0 +1,20 @@
+{
+  "name": "club-radar-2",
+  "version": "1.0.0",
+  "description": "클럽레이더 2 - 3050 실시간 위치기반 매칭 & 스마트 어드민 플랫폼",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cloudflared": "^0.7.1",
+    "express": "^4.19.2",
+    "qrcode-terminal": "^0.12.0"
+  },
+  "devDependencies": {
+    "puppeteer": "^25.0.4"
+  },
+  "author": "Antigravity",
+  "license": "ISC"
+}

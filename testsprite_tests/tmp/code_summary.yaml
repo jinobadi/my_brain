@@ -1,0 +1,68 @@
+version: "2"
+type: frontend
+tech_stack:
+  - HTML
+  - Vanilla CSS
+  - JavaScript
+  - Node.js Express (Backend)
+  - SSE (Server-Sent Events)
+routes:
+  - path: /
+    file: index.html
+    auth_required: false
+    description: Main single page application for Club Rader 2
+features:
+  - name: User Authentication
+    description: Quick user registration and simulation session management
+    files:
+      - index.html
+      - app.js
+    entry_route: /
+    user_interactions:
+      - Click Quick Switcher modal trigger (simulated in console via openQuickSwitcherModal)
+      - Type username in nickname input
+      - Select role (player or coach)
+      - Click create button to register and login
+    api_calls: []
+    auth_required: false
+  - name: Coach Admin Approval
+    description: VVIP Admin simulation for immediate coach profile activation
+    files:
+      - app.js
+      - server.js
+    entry_route: /
+    user_interactions: []
+    api_calls:
+      - method: POST
+        endpoint: /api/admin/users/:uid/approve
+    auth_required: false
+  - name: Radar GPS Scan and Dual List
+    description: Scan nearby players and coaches with 50m distance lock guard
+    files:
+      - index.html
+      - app.js
+    entry_route: /
+    user_interactions:
+      - Navigate to Radar tab via bottom tab bar
+      - Scan nearby players and coaches list (self excluded, but self pin displayed in center)
+      - Check distance constraints (<= 50m triggers neon chat button, > 50m locks to greyed-out disabled button)
+      - Click disabled button triggers warning Toast message
+    api_calls: []
+    auth_required: true
+  - name: 1to1 Chat Matching and Immediate Acceptance
+    description: 1:1 Booking chat request and bulk transaction acceptance with credit deduction
+    files:
+      - app.js
+      - server.js
+    entry_route: /
+    user_interactions:
+      - Click active neon Chat button in Radar screen to request 1:1 chat
+      - Confirm deduction modal triggers OK click
+      - Target Coach navigates to Chat tab to see incoming pending request
+      - Coach clicks approve button and confirms point deduction modal ok click
+      - Chat room opens as approved and transitions to active Messenger view
+    api_calls:
+      - method: POST
+        endpoint: /api/chat/accept
+    auth_required: true
+known_limitations: []

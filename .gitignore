@@ -1,0 +1,8 @@
+node_modules/
+server.log
+.versions/
+.DS_Store
+.cursor/
+
+
+testsprite_tests/tmp/config.json

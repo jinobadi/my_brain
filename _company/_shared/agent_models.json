@@ -1,0 +1,11 @@
+{
+  "ceo": "qwen/qwen3.6-35b-a3b",
+  "youtube": "gemma4:latest",
+  "instagram": "text-embedding-nomic-embed-text-v1.5",
+  "designer": "text-embedding-nomic-embed-text-v1.5",
+  "business": "text-embedding-nomic-embed-text-v1.5",
+  "secretary": "text-embedding-nomic-embed-text-v1.5",
+  "editor": "text-embedding-nomic-embed-text-v1.5",
+  "writer": "text-embedding-nomic-embed-text-v1.5",
+  "researcher": "text-embedding-nomic-embed-text-v1.5"
+}

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html class="dark" lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>클럽레이더 2 (Club Radar 2) - 실시간 GPS 레이더 & 부킹 매칭 플랫폼</title>
+  
+  <!-- standalone WebApp PWA 지원 메타 태그 -->
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="클럽레이더2"/>
+  <meta name="theme-color" content="#05050a"/>
+  
+  <!-- 구글 웹폰트 및 아이콘 패키지 로드 -->
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link href="styles.css?v=2.0.1" rel="stylesheet"/>
+  
+  <!-- 외부 SDK (Firebase API & PayPal 결제 연동) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD"></script>
+  
+  <!-- Tailwind CSS JIT CDN 주입 및 테마 토큰 매핑 -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#ff007f",        /* 네온 핑크 */
+            "primary-container": "#bc00dd", /* 네온 자홍 */
+            secondary: "#e9c349",      /* 샴페인 골드 */
+            accent: "#00f0ff",         /* 네온 사이언 */
+            background: "#05050a",     /* 딥 다크 퍼플 블랙 */
+            surface: "#0d0b18",
+            "surface-container": "#141126",
+            "surface-container-low": "#0f0d1d",
+            "on-surface-variant": "#a5a5c5",
+            "on-primary": "#ffffff"
+          },
+          fontFamily: {
+            sora: ["Sora", "sans-serif"],
+            sans: ["Noto Sans KR", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gradient-to-tr from-[#05050a] via-[#0b0818] to-[#05050a] text-white font-sans min-h-screen flex justify-center items-center py-6 px-4 relative overflow-hidden">
+
+  <!-- VVIP 무빙 백그라운드 네온 오브 배경 (PC 뷰 전용) -->
+  <div class="pc-bg-orbs">
+    <div class="orb orb-pink"></div>
+    <div class="orb orb-cyan"></div>
+    <div class="orb orb-gold"></div>
+  </div>
+
+  <!-- ==========================================================================
+       모바일 디바이스 프레임 (PC 뷰용 목업 프레임 / 관리자 전환 시 가로 960px 확장)
+       ========================================================================== -->
+  <div id="app-device-wrapper" class="device-wrapper flex flex-col justify-between z-10 transition-all duration-300">
+    
+    <!-- 디바이스 노치바 모사 -->
+    <div class="device-notch" id="device-notch"></div>
+    
+    <!-- 모의 스마트폰 상단 상태 표시줄 (Mock Status Bar) -->
+    <div id="mock-status-bar" class="h-8 shrink-0 flex justify-between items-center px-6 pt-2 text-[10px] text-white/50 select-none z-50">
+      <span class="font-bold font-sora">00:45</span>
+      <div class="flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-[12px]">signal_cellular_4_bar</span>
+        <span class="material-symbols-outlined text-[12px]">wifi</span>
+        <span class="material-symbols-outlined text-[12px]">battery_charging_full</span>
+      </div>
+    </div>
+
+    <!-- ==========================================================================
+         글로벌 앱 헤더 (Global Application Header)
+         ========================================================================== -->
+    <header class="bg-surface/80 backdrop-blur-xl border-b border-white/10 shrink-0 h-14 flex justify-between items-center px-5 z-40">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-xl cursor-pointer hover:scale-110 active:scale-95 transition-all" onclick="openSidebar()">menu</span>
+        <h1 class="font-sora text-sm font-black tracking-widest text-primary drop-shadow-[0_0_12px_rgba(255,0,127,0.5)] cursor-pointer hover:scale-105 active:scale-95 transition-all" id="header-app-title" onclick="navigateTo('home')">CLUB RADER 2 (v1.6.4)</h1>
+      </div>
+      
+      <!-- 인앱 크레딧 뱃지 및 알림/프로필 -->
+      <div class="flex items-center gap-3">
+        <div id="top-credit-badge" class="bg-secondary/10 text-secondary border border-secondary/30 text-[10px] font-black px-2.5 py-1 rounded-full shrink-0 cursor-pointer btn-active-scale" onclick="openStoreModal()">
+          50 CR
+        </div>
+        <!-- 알림 벨 아이콘 (Notification Bell) -->
+        <div class="relative cursor-pointer hover:scale-110 active:scale-95 transition-all" onclick="navigateTo('notifications')">
+          <span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings:'FILL' 1">notifications</span>
+          <span id="notif-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-primary text-on-primary text-[8px] font-black rounded-full flex items-center justify-center">0</span>
+        </div>
+        <span class="material-symbols-outlined text-primary text-xl cursor-pointer hover:scale-110 active:scale-95 transition-all" onclick="navigateTo('profile')">account_circle</span>
+      </div>
+    </header>
+
+    <!-- ==========================================================================
+         동적 페이지 렌더링 본문 (Dynamic Content Window)
+         ========================================================================== -->
+    <main class="flex-1 overflow-y-auto pb-4 hide-scrollbar relative bg-[#0c0c1f]" id="page-content">
+      <!-- app.js 파일의 마운트 로직에 의해 뷰 화면이 동적 빌드 및 렌더링됩니다. -->
+    </main>
+
+    <!-- ==========================================================================
+         통합 하단 네비게이션 탭바 (Bottom Navigation Tab Bar)
+         ========================================================================== -->
+    <nav id="bottom-tab-bar" class="bg-surface-container/90 backdrop-blur-2xl border-t border-white/10 shrink-0 h-20 flex justify-around items-center px-2 z-40 shadow-[0_-8px_32px_rgba(0,0,0,0.8)] pb-2 rounded-t-3xl">
+      <!-- 홈 (Home) -->
+      <a class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary transition-all relative btn-active-scale" href="#" data-nav="home">
+        <span class="material-symbols-outlined text-xl">home</span>
+        <span class="text-[9px] font-bold mt-1 tracking-tighter">홈</span>
+      </a>
+
+      <!-- 클럽 예약 (Booking) -->
+      <a class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary transition-all relative btn-active-scale" href="#" data-nav="booking">
+        <span class="material-symbols-outlined text-xl">nightlife</span>
+        <span class="text-[9px] font-bold mt-1 tracking-tighter">예약</span>
+      </a>
+
+      <!-- 실시간 레이더 스캔 (Radar) -->
+      <a class="flex flex-col items-center justify-center text-primary relative btn-active-scale" href="#" data-nav="radar">
+        <div class="absolute -top-6 w-14 h-14 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
+        <div class="w-12 h-12 bg-neon-gradient rounded-full flex items-center justify-center -translate-y-4 shadow-lg shadow-primary/40 border-2 border-white/15">
+          <span class="material-symbols-outlined text-white text-2xl" style="font-variation-settings: 'FILL' 1;">radar</span>
+        </div>
+        <span class="text-[9px] font-black tracking-tighter -translate-y-2">레이더</span>
+      </a>
+
+      <!-- 부킹 채팅 1:1 대화 (Talk) -->
+      <a class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary transition-all relative btn-active-scale" href="#" data-nav="talk">
+        <span class="material-symbols-outlined text-xl">chat_bubble</span>
+        <span class="text-[9px] font-bold mt-1 tracking-tighter">채팅</span>
+      </a>
+
+      <!-- 성공 수기 게시판 (Success Stories / Board) -->
+      <a class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary transition-all relative btn-active-scale" href="#" data-nav="board">
+        <span class="material-symbols-outlined text-xl">rate_review</span>
+        <span class="text-[9px] font-bold mt-1 tracking-tighter">수기</span>
+      </a>
+    </nav>
+
+    <!-- ==========================================================================
+         VVIP 커스텀 모달 및 알림 팝업 시스템 (Custom Interactive Modals)
+         ========================================================================== -->
+    
+    <!-- 1. 커스텀 토스트 알림 컨테이너 (Toast Container) -->
+    <div id="toast-container" class="fixed top-14 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- 2. 포인트 차감 2중 동의 팝업 모달 (Credit Deduction Confirm Modal) -->
+    <div id="credit-confirm-modal" class="fixed inset-0 z-[10008] bg-[#05050a]/90 backdrop-blur-md hidden items-center justify-center px-6">
+      <div class="glass-card p-6 rounded-3xl border border-primary/40 w-full max-w-sm transform scale-95 shadow-[0_20px_50px_rgba(255,0,127,0.3)]">
+        <h3 class="text-md font-black text-white mb-2 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary animate-bounce">payments</span> 포인트 결제 확인
+        </h3>
+        <p id="credit-confirm-msg" class="text-[13px] text-on-surface-variant mb-6 whitespace-pre-wrap leading-relaxed">대화를 수락하시면 포인트가 차감됩니다.</p>
+        
+        <div class="bg-primary/5 border border-primary/20 rounded-2xl p-3.5 mb-6 flex justify-between items-center text-xs">
+          <div>
+            <span class="text-white/60 block text-[10px]">차감 크레딧</span>
+            <span id="credit-confirm-deduct" class="text-primary font-black text-sm">-10 CR</span>
+          </div>
+          <div class="text-right">
+            <span class="text-white/60 block text-[10px]">결제 후 내 잔액</span>
+            <span id="credit-confirm-balance" class="text-white font-black text-sm">40 CR</span>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button type="button" id="credit-confirm-cancel" class="flex-1 h-12 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white btn-active-scale">대화 거절</button>
+          <button type="button" id="credit-confirm-ok" class="flex-1 h-12 bg-neon-gradient rounded-xl text-xs font-bold text-white shadow-lg shadow-primary/20 btn-active-scale">수락 & 연결🪙</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 일반 안내/확인 커스텀 모달 (Confirm Modal) -->
+    <div id="custom-confirm-modal" class="fixed inset-0 z-[10000] bg-[#0c0c1f]/90 backdrop-blur-md hidden items-center justify-center px-6 opacity-0 transition-opacity duration-300">
+      <div class="glass-card p-6 rounded-3xl border border-primary/20 w-full max-w-sm transform scale-95 transition-transform duration-300" id="custom-confirm-box">
+        <h3 class="text-md font-bold text-white mb-2 flex items-center gap-2" id="custom-confirm-title">
+          <span class="material-symbols-outlined text-primary">info</span> 알림
+        </h3>
+        <p class="text-[12px] text-on-surface-variant mb-6 whitespace-pre-wrap leading-relaxed" id="custom-confirm-msg">알림 메시지 내용</p>
+        <div class="flex gap-3">
+          <button type="button" id="custom-confirm-cancel" class="flex-1 h-11 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white btn-active-scale">취소</button>
+          <button type="button" id="custom-confirm-ok" class="flex-1 h-11 bg-neon-gradient rounded-xl text-xs font-bold text-white shadow-lg shadow-primary/20 btn-active-scale">확인</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🛡️ VVIP 관리자 보안 패스워드 인증 모달 (Admin Access Password Verification Modal) -->
+    <div id="admin-password-modal" class="fixed inset-0 z-[10004] bg-[#05050a]/95 backdrop-blur-xl hidden items-center justify-center px-6">
+      <div class="glass-card p-6 rounded-3xl border border-red-500/30 w-full max-w-sm shadow-[0_20px_50px_rgba(239,68,68,0.2)]">
+        <div class="flex justify-between items-center mb-1">
+          <h3 class="text-base font-black text-white tracking-tight flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-red-500 text-xl animate-pulse">admin_panel_settings</span> VVIP 관리자 보안 인증
+          </h3>
+          <span class="material-symbols-outlined text-white/40 cursor-pointer p-1 hover:text-white transition" onclick="closeAdminPasswordModal()">close</span>
+        </div>
+        <p class="text-[10px] text-on-surface-variant/80 mb-4">본 페이지는 플랫폼 운영자 전용 영역입니다. 보안 비밀번호를 입력해 주십시오.</p>
+        
+        <form id="admin-password-form" class="space-y-4" onsubmit="submitAdminPasswordVerification(event)">
+          <div>
+            <label class="block text-[10px] text-white/60 font-black mb-1.5 uppercase">보안 비밀번호 입력</label>
+            <input type="password" id="admin-pw-input" required placeholder="••••••" class="w-full h-12 bg-surface border border-white/10 rounded-2xl px-4 text-xs text-white focus:outline-none focus:border-red-500 placeholder:text-white/20 text-center tracking-widest text-lg"/>
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button type="button" class="flex-1 h-11 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white btn-active-scale" onclick="closeAdminPasswordModal()">취소</button>
+            <button type="submit" class="flex-1 h-11 bg-red-600 border border-red-500 text-white rounded-xl text-xs font-black shadow-lg shadow-red-500/20 btn-active-scale">보안 해제 & 입장 🔑</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 4. VVIP 크레딧 충전 상점 모달 (VVIP Credit Store Modal) -->
+    <div id="store-modal" class="fixed inset-0 z-[10005] bg-[#05050a]/95 backdrop-blur-xl hidden items-center justify-center px-6">
+      <div class="glass-card p-6 rounded-3xl neon-border-gold w-full max-w-sm shadow-[0_20px_50px_rgba(233,195,73,0.2)]">
+        <div class="flex justify-between items-center mb-1">
+          <h3 class="text-base font-black text-white tracking-tight flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-secondary text-xl">payments</span>VVIP 크레딧 충전소
+          </h3>
+          <span class="material-symbols-outlined text-white/40 cursor-pointer p-1 hover:text-white transition" onclick="closeStoreModal()">close</span>
+        </div>
+        <p class="text-[10px] text-on-surface-variant/80 mb-4">페이팔 테스트 샌드박스로 즉시 충전하여 매칭 확률을 높이세요.</p>
+        
+        <!-- ⚠️ Sandbox 안전 고지 배너 대대적 네온 골드 보강 -->
+        <div class="mb-4 p-3 bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl flex items-start gap-2.5 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+          <span class="material-symbols-outlined text-lg animate-bounce shrink-0 mt-0.5 animate-pulse" style="font-variation-settings:'FILL' 1">warning</span>
+          <div class="min-w-0">
+            <span class="text-[10px] font-black leading-snug block uppercase tracking-wider text-amber-200">100% 무료 모의 테스트 안내 🔒</span>
+            <span class="text-[9px] font-bold leading-normal block mt-1 text-amber-300/80">
+              본 결제창은 **PayPal Sandbox(가상 안전 모의 환경)**으로 작동 중입니다. 대표님의 실제 신용카드나 현금 결제는 **단 1원도 청구되지 않고 0원 처리**되오니 안심하고 테스트 버튼을 클릭해 주십시오!
+            </span>
+          </div>
+        </div>
+        
+        <div class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1 hide-scrollbar" id="store-packages-list">
+          <!-- app.js 바인딩 목록 -->
+        </div>
+
+        <div class="mt-4 p-4 bg-black/50 border border-white/10 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between text-[10px] text-white/80 font-bold px-1 border-b border-white/5 pb-2 mb-2">
+            <span>선택한 결제 금액 (Price)</span>
+            <span class="text-secondary font-black" id="store-selected-price">$0.00 USD</span>
+          </div>
+          
+          <!-- 카드사 선택 퀵 칩 (Card Brand Selection) -->
+          <div>
+            <label class="block text-[8px] text-white/50 font-bold mb-1">카드사 선택 (Select Card Brand)</label>
+            <div class="flex flex-wrap gap-1.5" id="store-card-chips">
+              <span class="px-2 py-1 bg-white/5 border border-white/10 hover:border-secondary/40 rounded-lg text-[9px] text-white/80 font-black cursor-pointer transition active:scale-95" onclick="selectFakeCardBrand('삼성카드')">삼성</span>
+              <span class="px-2 py-1 bg-white/5 border border-white/10 hover:border-secondary/40 rounded-lg text-[9px] text-white/80 font-black cursor-pointer transition active:scale-95" onclick="selectFakeCardBrand('국민카드')">국민</span>
+              <span class="px-2 py-1 bg-white/5 border border-white/10 hover:border-secondary/40 rounded-lg text-[9px] text-white/80 font-black cursor-pointer transition active:scale-95" onclick="selectFakeCardBrand('현대카드')">현대</span>
+              <span class="px-2 py-1 bg-white/5 border border-white/10 hover:border-secondary/40 rounded-lg text-[9px] text-white/80 font-black cursor-pointer transition active:scale-95" onclick="selectFakeCardBrand('신한카드')">신한</span>
+              <span class="px-2 py-1 bg-white/5 border border-white/10 hover:border-secondary/40 rounded-lg text-[9px] text-white/80 font-black cursor-pointer transition active:scale-95" onclick="selectFakeCardBrand('VISA')">VISA</span>
+              <span class="px-2 py-1 bg-white/5 border border-white/10 hover:border-secondary/40 rounded-lg text-[9px] text-white/80 font-black cursor-pointer transition active:scale-95" onclick="selectFakeCardBrand('MasterCard')">Master</span>
+            </div>
+            <input type="hidden" id="fake-card-brand" value="">
+          </div>
+
+          <!-- 카드 번호 입력 (Card Number) -->
+          <div>
+            <label class="block text-[8px] text-white/50 font-bold mb-1">카드 번호 (Card Number - 아무 번호나 입력 가능 🔒)</label>
+            <div class="relative">
+              <input type="text" id="fake-card-number" placeholder="0000 0000 0000 0000" maxlength="19" class="w-full h-9 bg-white/5 border border-white/10 rounded-xl px-3 text-[11px] font-black text-white placeholder-white/20 focus:border-secondary/50 focus:outline-none transition">
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-white/30 font-bold" id="fake-card-brand-display">CARD</span>
+            </div>
+          </div>
+
+          <!-- 만료일 및 CVC (Expiry & CVC) -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[8px] text-white/50 font-bold mb-1">만료일 (Expiry - MM/YY)</label>
+              <input type="text" id="fake-card-expiry" placeholder="MM/YY" maxlength="5" class="w-full h-9 bg-white/5 border border-white/10 rounded-xl px-3 text-[11px] font-black text-white placeholder-white/20 focus:border-secondary/50 focus:outline-none text-center transition">
+            </div>
+            <div>
+              <label class="block text-[8px] text-white/50 font-bold mb-1">CVC번호 (CVC Code - 3자리)</label>
+              <input type="password" id="fake-card-cvc" placeholder="***" maxlength="3" class="w-full h-9 bg-white/5 border border-white/10 rounded-xl px-3 text-[11px] font-black text-white placeholder-white/20 focus:border-secondary/50 focus:outline-none text-center transition">
+            </div>
+          </div>
+
+          <!-- 소유자 이름 (Cardholder Name) -->
+          <div>
+            <label class="block text-[8px] text-white/50 font-bold mb-1">소유자 이름 (Cardholder Name)</label>
+            <input type="text" id="fake-card-name" placeholder="지노바디 (JINOBADI)" class="w-full h-9 bg-white/5 border border-white/10 rounded-xl px-3 text-[11px] font-black text-white placeholder-white/20 focus:border-secondary/50 focus:outline-none transition">
+          </div>
+
+          <!-- 승인 실행 버튼 (Pay Button) -->
+          <button type="button" id="btn-fake-card-pay" class="w-full h-10 mt-2 bg-gradient-to-r from-secondary to-amber-500 text-[10px] font-black text-[#05050a] rounded-xl flex items-center justify-center gap-1.5 shadow-[0_4px_15px_rgba(233,195,73,0.3)] hover:brightness-110 active:scale-95 transition btn-active-scale" onclick="processFakeCardPayment()">
+            <span class="material-symbols-outlined text-sm font-black">lock_open</span>💳 VVIP 모의 카드 안전 결제 승인
+          </button>
+        </div>
+
+        <button type="button" class="w-full mt-4 h-11 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white/80 hover:bg-white/10 active:scale-95 transition-all btn-active-scale" onclick="closeStoreModal()">충전 취소</button>
+      </div>
+    </div>
+
+    <!-- 5. 크라우드소싱 신규/폐업 제보 신청 모달 (Report Club Modal) -->
+    <div id="report-modal" class="fixed inset-0 z-[10006] bg-[#05050a]/95 backdrop-blur-xl hidden items-center justify-center px-6">
+      <div class="glass-card p-6 rounded-3xl border border-accent/30 w-full max-w-sm shadow-[0_20px_50px_rgba(0,240,255,0.15)]">
+        <div class="flex justify-between items-center mb-1">
+          <h3 class="text-base font-black text-white tracking-tight flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-accent text-xl animate-pulse">campaign</span> 나이트클럽 정보 제보
+          </h3>
+          <span class="material-symbols-outlined text-white/40 cursor-pointer p-1 hover:text-white transition" onclick="closeReportModal()">close</span>
+        </div>
+        <p class="text-[10px] text-on-surface-variant/80 mb-4">클럽 정보(신규 개업/폐업) 제보 시 **무료 20 크레딧**이 보상 지급됩니다!</p>
+        
+        <form id="report-form" class="space-y-4" onsubmit="submitReportForm(event)">
+          <div>
+            <label class="block text-[10px] text-white/60 font-bold mb-1.5">제보 유형 선택</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" id="btn-report-new" class="h-10 rounded-xl border border-accent/20 bg-accent/5 text-xs text-accent font-black transition-all btn-active-scale" onclick="setReportType('new_club')">🆕 신규 오픈 제보</button>
+              <button type="button" id="btn-report-closed" class="h-10 rounded-xl border border-white/10 bg-white/5 text-xs text-white/60 font-black transition-all btn-active-scale" onclick="setReportType('closed_club')">⚠️ 폐업 제보</button>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-[10px] text-white/60 font-bold mb-1">나이트클럽 이름</label>
+            <input type="text" id="report-club-name" required placeholder="예: 대전 원나이트클럽" class="w-full h-10 bg-surface border border-white/10 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-accent placeholder:text-white/20"/>
+          </div>
+          
+          <div>
+            <label class="block text-[10px] text-white/60 font-bold mb-1">상세 제보 내용</label>
+            <textarea id="report-club-details" required rows="3" placeholder="제보 유형에 대한 상세한 주소, 특징, 설명 등을 적어주세요. 관리자 검증 후 즉시 포인트가 자동 적립됩니다." class="w-full bg-surface border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-accent placeholder:text-white/20"></textarea>
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button type="button" class="flex-1 h-11 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white btn-active-scale" onclick="closeReportModal()">취소</button>
+            <button type="submit" class="flex-1 h-11 bg-accent/20 border border-accent/40 text-accent rounded-xl text-xs font-black shadow-lg shadow-accent/10 btn-active-scale">제보하기 📢</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 7. VVIP 테이블 예약 신청 모달 (Booking Form Modal) -->
+    <div id="booking-form-modal" class="fixed inset-0 z-[10007] bg-[#05050a]/95 backdrop-blur-xl hidden items-center justify-center px-6">
+      <div class="glass-card p-6 rounded-3xl border-primary/30 w-full max-w-sm shadow-[0_20px_50px_rgba(255,0,127,0.25)]">
+        <div class="flex justify-between items-center mb-1">
+          <h3 class="text-base font-black text-white tracking-tight flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-primary text-xl animate-pulse">sports_bar</span> VVIP 테이블 예약 신청
+          </h3>
+          <span class="material-symbols-outlined text-white/40 cursor-pointer p-1 hover:text-white transition" onclick="closeBookingFormModal()">close</span>
+        </div>
+        <p class="text-[10px] text-on-surface-variant/80 mb-4" id="bf-modal-waiter-desc">웨이터 쩝이접이님에게 예약을 진행합니다.</p>
+        
+        <form id="booking-form-submit" class="space-y-4" onsubmit="submitBookingForm(event)">
+          <input type="hidden" id="bf-waiter-uid" value=""/>
+          <input type="hidden" id="bf-waiter-name" value=""/>
+          <input type="hidden" id="bf-club-name" value=""/>
+          
+          <div>
+            <label class="block text-[10px] text-white/60 font-bold mb-1">예약 테이블 종류</label>
+            <select id="bf-type" class="w-full h-11 bg-surface border border-white/10 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-primary">
+              <option value="룸 (Room)">🍾 룸 (VVIP 전용 Room)</option>
+              <option value="부스 (Booth)">🥂 부스 (세련된 Booth)</option>
+              <option value="홀 테이블 (Hall)">🍺 홀 테이블 (Hall Table)</option>
+            </select>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] text-white/60 font-bold mb-1">방문 인원수</label>
+              <input type="number" id="bf-guests" min="1" max="30" value="2" required class="w-full h-11 bg-surface border border-white/10 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-primary"/>
+            </div>
+            <div>
+              <label class="block text-[10px] text-white/60 font-bold mb-1">예약 시간</label>
+              <input type="text" id="bf-time" placeholder="예: 오늘 밤 10시" required class="w-full h-11 bg-surface border border-white/10 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-primary"/>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-[10px] text-white/60 font-bold mb-1">연락처 (전화번호)</label>
+            <input type="text" id="bf-phone" placeholder="010-XXXX-XXXX" required class="w-full h-11 bg-surface border border-white/10 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-primary"/>
+          </div>
+          
+          <p class="text-[9px] text-white/40 leading-relaxed font-semibold">
+            * 예약 완료 시 웨이터에게 즉각 푸시 알림이 발송되며, 수락 완료 시 최종 예약 승인이 통지됩니다.
+          </p>
+          
+          <div class="flex gap-3 pt-2">
+            <button type="button" class="flex-1 h-11 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white btn-active-scale" onclick="closeBookingFormModal()">취소</button>
+            <button type="submit" class="flex-1 h-11 bg-neon-gradient text-white rounded-xl text-xs font-black shadow-lg shadow-primary/20 btn-active-scale">VVIP 예약 신청 🍾</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 6. 슬라이드 메뉴 사이드바 (Slide-in Sidebar Menu) -->
+    <div id="sidebar-overlay" class="fixed inset-0 z-[10010] bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeSidebar()"></div>
+    <div id="sidebar-menu" class="fixed top-0 left-0 bottom-0 w-64 bg-[#0c0c1f] border-r border-white/10 z-[10020] transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+      <div class="p-6 border-b border-white/10 flex justify-between items-center">
+        <h2 class="text-lg font-black text-primary drop-shadow-md tracking-wider cursor-pointer hover:scale-105 active:scale-95 transition-all" id="sidebar-app-title" onclick="navigateTo('home'); closeSidebar();">CLUB RADER 2 (v1.6.4)</h2>
+        <span class="material-symbols-outlined text-white/50 cursor-pointer p-1" onclick="closeSidebar()">close</span>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 space-y-2">
+        <a href="#" class="flex items-center gap-3 text-white p-3 rounded-xl hover:bg-white/5 transition border border-accent/20 bg-accent/5" onclick="toggleFullscreenApp();">
+          <span class="material-symbols-outlined text-accent animate-pulse" id="fullscreen-icon">fullscreen</span>
+          <span id="fullscreen-text" class="font-bold text-accent">진짜 앱(네이티브) 뷰로 실행</span>
+        </a>
+        
+        <a href="#" class="flex items-center gap-3 text-white p-3 rounded-xl hover:bg-white/5 transition" onclick="closeSidebar(); navigateTo('profile');"><span class="material-symbols-outlined text-primary">person</span> 내 정보 설정</a>
+        
+        <a href="#" class="flex items-center gap-3 text-white p-3 rounded-xl hover:bg-white/5 transition" onclick="closeSidebar(); navigateTo('notifications');">
+          <span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1">notifications</span>
+          알림 센터
+          <span id="sidebar-notif-badge" class="ml-auto bg-primary text-on-primary text-[8px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">0</span>
+        </a>
+        
+        <a href="#" class="flex items-center gap-3 text-white p-3 rounded-xl hover:bg-white/5 transition" onclick="closeSidebar(); showReportModal();"><span class="material-symbols-outlined text-accent">campaign</span> 나이트클럽 제보하기</a>
+        <a href="#" class="flex items-center gap-3 text-white p-3 rounded-xl hover:bg-white/5 transition" onclick="closeSidebar(); showToast('공지사항 게시판으로 이동합니다.', 'info');"><span class="material-symbols-outlined text-secondary">campaign</span> 공지사항</a>
+        <a href="#" class="flex items-center gap-3 text-white p-3 rounded-xl hover:bg-white/5 transition" onclick="closeSidebar(); showToast('고객센터로 이동합니다.', 'info');"><span class="material-symbols-outlined text-green-400">support_agent</span> 고객센터</a>
+        
+        <!-- 어드민 대시보드 바로가기 영역 (VVIP 권한용) -->
+        <div class="border-t border-white/10 pt-2 mt-2">
+          <a href="#" class="flex items-center gap-3 text-white p-3 rounded-xl hover:bg-red-500/10 transition border border-red-500/10 bg-red-500/5" onclick="closeSidebar(); navigateTo('admin');">
+            <span class="material-symbols-outlined text-red-400" style="font-variation-settings:'FILL' 1">admin_panel_settings</span>
+            <span class="flex-1 font-bold">VVIP 어드민 대시보드</span>
+            <span class="text-[8px] text-red-400 border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 rounded font-black">ADMIN</span>
+          </a>
+        </div>
+      </div>
+      <div class="p-4 border-t border-white/10">
+        <button class="w-full py-3 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2 btn-active-scale" onclick="closeSidebar(); logout();">
+          <span class="material-symbols-outlined text-[16px]">logout</span> 로그아웃
+        </button>
+      </div>
+    </div>
+
+  </div> <!-- /device-wrapper -->
+
+  <!-- 📱 PC 전용 실시간 모바일 QR 접속 보드 (PC-Only QA Helper Panel) -->
+  <div id="pc-qa-helper" class="hidden lg:flex flex-col gap-4 w-72 p-6 glass-card border border-primary/20 bg-surface/80 rounded-3xl ml-6 z-10 shadow-[0_20px_50px_rgba(255,0,127,0.15)] shrink-0 self-center max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center gap-2 border-b border-white/10 pb-3">
+      <span class="material-symbols-outlined text-primary text-xl animate-pulse">smartphone</span>
+      <h3 class="text-xs font-black text-white tracking-wider">모바일 QA 무선 접속기</h3>
+    </div>
+    
+    <p class="text-[10px] text-on-surface-variant leading-relaxed">
+      동일 Wi-Fi 망이 아니어도 괜찮습니다! 아래 QR 코드를 스마트폰 기본 카메라로 비추면 **1초 만에 스마트폰 카카오톡 원격 뷰**로 자동 연결됩니다.
+    </p>
+
+    <!-- 실시간 QR 코드 영역 (구글 차트 API 활용해 백엔드 터널 URL 동적 매핑) -->
+    <div class="bg-white p-3 rounded-2xl flex items-center justify-center border border-white/10 self-center">
+      <img id="qa-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fclub-rader2.onrender.com" class="w-32 h-32 object-contain" alt="QA Mobile QR"/>
+    </div>
+
+    <!-- 터널 주소 텍스트 및 복사 버튼 -->
+    <div class="bg-black/40 border border-white/5 rounded-2xl p-3 flex flex-col gap-2">
+      <span class="text-[8px] text-primary font-black uppercase tracking-widest block leading-none">실시간 카카오톡 공유용 원격 주소</span>
+      <div class="flex gap-2 mt-1">
+        <input type="text" id="qa-tunnel-url-input" readonly value="https://club-rader2.onrender.com" class="flex-1 h-8 bg-surface border border-white/10 rounded-xl px-2 text-[9px] text-white/70 focus:outline-none"/>
+        <button class="h-8 px-2.5 bg-neon-gradient rounded-xl text-[9px] font-black text-white btn-active-scale shadow-md shadow-primary/20 shrink-0" onclick="copyQATunnelUrl()">복사</button>
+      </div>
+    </div>
+
+    <div class="text-[9px] text-on-surface-variant/70 border-t border-white/5 pt-3 leading-relaxed">
+      💡 **QA 테스터 가이드:**<br/>
+      1. 스마트폰으로 접속한 뒤 **퀵전환⚡** 버튼으로 1초 만에 선수/웨이터 계정을 오가며 실시간 씽크 테스트를 하세요.<br/>
+      2. 햄버거 메뉴를 통해 VVIP 관리자 페이지로 들어가 실시간 승인 및 포인트 조작을 하실 수 있습니다.
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       디버그 / 테스터 퀵 전환용 플로팅 조작 바 (Developer Floating QA Controllers)
+       ========================================================================== -->
+  
+  <!-- ⚡ 테스터 전용 퀵 계정 전환 플로팅 버튼 (삭제됨) -->
+
+  <!-- ⚡ 테스터 전용 퀵 계정 전환 모달 (1인 멀티 QA 씽크 도구) -->
+  <div id="quick-switcher-modal" class="fixed inset-0 z-[10008] bg-[#05050a]/95 backdrop-blur-xl hidden items-center justify-center px-6">
+    <div class="glass-card p-6 rounded-3xl border border-primary/30 w-full max-w-sm shadow-[0_20px_50px_rgba(255,0,127,0.25)] flex flex-col max-h-[85vh]">
+      
+      <div class="flex justify-between items-center mb-1 shrink-0">
+        <h3 class="text-base font-black text-white tracking-tight flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-primary text-xl animate-pulse">bolt</span>테스터 계정 교차 전환기
+        </h3>
+        <span class="material-symbols-outlined text-white/40 cursor-pointer p-1 hover:text-white transition" onclick="closeQuickSwitcherModal()">close</span>
+      </div>
+      <p class="text-[10px] text-on-surface-variant/80 mb-4 shrink-0">대중교통이나 야외에 나갈 필요 없이, 1초 만에 선수/코치 계정을 교차 로그인하세요.</p>
+      
+      <div class="bg-primary/5 border border-primary/10 rounded-2xl p-3 mb-4 shrink-0">
+        <div class="text-[9px] text-primary font-bold uppercase tracking-wider mb-1">현재 활성 세션</div>
+        <div id="quick-switcher-current-user" class="text-xs font-semibold text-white/90">
+          로그인 정보 없음 (게스트 상태)
+        </div>
+      </div>
+
+      <!-- 기가입 테스터 리스트 -->
+      <div class="flex-1 overflow-y-auto pr-1 hide-scrollbar mb-4 space-y-3">
+        <div>
+          <div class="text-[9px] text-primary/70 font-bold tracking-wider mb-1.5 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[10px]">person</span> 일반 선수단 리스트 (B2C)
+          </div>
+          <div class="space-y-1.5" id="quick-players-list"></div>
+        </div>
+        
+        <div class="pt-2 border-t border-white/5">
+          <div class="text-[9px] text-accent/70 font-bold tracking-wider mb-1.5 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[10px]">sports_bar</span> 영업 웨이터단 리스트 (B2B)
+          </div>
+          <div class="space-y-1.5" id="quick-waiters-list"></div>
+        </div>
+      </div>
+
+      <!-- 1초 가입 및 자동 로그인 폼 -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-3 shrink-0 mb-4">
+        <div class="text-[9px] text-secondary font-black uppercase tracking-wider mb-2">회원가입 및 로그인 ⚡</div>
+        <div class="flex gap-2">
+          <input type="text" id="quick-new-name" placeholder="닉네임 (예: 강남VVIP)" class="flex-1 h-9 bg-surface border border-white/10 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-secondary placeholder:text-white/20"/>
+          <select id="quick-new-role" class="w-20 h-9 bg-surface border border-white/10 rounded-xl px-2 text-xs text-white focus:outline-none focus:border-secondary">
+            <option value="player">선수👤</option>
+            <option value="coach">웨이터🍾</option>
+          </select>
+          <button class="h-9 px-3 bg-neon-gradient rounded-xl text-xs font-black text-white btn-active-scale shadow-lg shadow-primary/20 shrink-0" onclick="quickCreateAndLogin()">생성⚡</button>
+        </div>
+      </div>
+
+      <!-- Cascade Clean-up DB 청소기 -->
+      <div class="mb-2 shrink-0">
+        <button type="button" class="w-full h-10 bg-red-950/40 border border-red-500/30 rounded-xl text-xs font-black text-red-400 hover:bg-red-900/60 active:scale-95 transition-all btn-active-scale flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(239,68,68,0.1)]" onclick="triggerDatabaseClearAll()">
+          <span class="material-symbols-outlined text-sm animate-pulse">delete_forever</span>
+          ⚠️ QA 데이터 전체 청소 (Cascade Clean-up)
+        </button>
+      </div>
+
+      <button type="button" class="w-full shrink-0 h-10 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white/80 hover:bg-white/10 active:scale-95 transition-all btn-active-scale" onclick="closeQuickSwitcherModal()">닫기</button>
+    </div>
+  </div>
+
+  <!-- 비즈니스 코어 컨트롤러 스크립트 마운트 -->
+  <script src="app.js?v=2.2.0"></script>
+</body>
+</html>
